@@ -62,11 +62,16 @@ if ($Clean -eq $true)
 	Get-ChildItem -Path Build/**/NUL -Recurse | Remove-Item -Force
 }
 
-# Check current commit ID and write it into file for SMBIOS reference.
+# Check current commit ID and write it into file for SMBIOS reference. (Trim it)
+# Check current date and write it into file for SMBIOS reference too. (MM/dd/yyyy)
+
 Write-Output "[EDK2Build] Stamp build."
 $commit = git rev-parse HEAD
+$date = (Get-Date).Date.ToString("MM/dd/yyyy")
 if ($commit)
 {
+	$commit = $commit.Substring(0,8)
+
 	$releaseInfoContent = @(
 		"#ifndef __SMBIOS_RELEASE_INFO_H__",
 		"#define __SMBIOS_RELEASE_INFO_H__",
@@ -74,6 +79,10 @@ if ($commit)
 		"#undef __IMPL_COMMIT_ID__",
 		"#endif",
 		"#define __IMPL_COMMIT_ID__ `"$($commit)`"",
+		"#ifdef __RELEASE_DATE__",
+		"#undef __RELEASE_DATE__",
+		"#endif",
+		"#define __RELEASE_DATE__ `"$($date)`"",
 		"#endif"
 	)
 
